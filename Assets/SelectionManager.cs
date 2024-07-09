@@ -11,8 +11,10 @@ public class SelectionManager : MonoBehaviour
     public List<GameObject> unitsSelected = new List<GameObject>();
     public LayerMask clickableUnit;
     public LayerMask ground;
+    public LayerMask attackable;
     public GameObject groundMarker;
     private Camera cam;
+    UnitMovement unitMovement;
     private void Awake(){
         if(Instance != null && Instance != this){
             Destroy(gameObject);
@@ -56,7 +58,24 @@ public class SelectionManager : MonoBehaviour
                 groundMarker.SetActive(false);
                 groundMarker.SetActive(true);
             }
-        }      
+        } 
+
+
+        if(unitsSelected.Count > 0 && HasOffensiveUnit(unitsSelected)){
+          RaycastHit hit;
+          Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+
+        if(Physics.Raycast(ray, out hit, Mathf.Infinity, attackable)){
+            if(Input.GetMouseButtonDown(1)){
+                Transform target = hit.transform;
+                foreach(GameObject unit in unitsSelected){
+                    if(unit.GetComponent<AttackController>()){
+                        unit.GetComponent<AttackController>().targetToAttack = target;
+                    }
+                }
+            }
+        }
+        }       
     }
 
     private void MultiSelect(GameObject unit)
@@ -106,5 +125,13 @@ public class SelectionManager : MonoBehaviour
             TriggerSelectIndicator(unit, true);
             EnableUnitMovement(unit, true);
         }
+    }
+    private bool HasOffensiveUnit(List<GameObject> unitsSelected){
+        foreach(GameObject unit in unitsSelected){
+            if(unit.GetComponent<AttackController>()){
+                return true;
+            }
+        }
+        return false;
     }
 }
